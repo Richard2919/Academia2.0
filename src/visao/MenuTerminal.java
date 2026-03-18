@@ -49,7 +49,7 @@ public class MenuTerminal {
             System.out.println("4. Listar Alunos (Controle de Pagamento)");
             System.out.println("5. Listar Fichas Criadas (Resumo)");
             System.out.println("6. Ver Ficha Completa de um Aluno");
-            System.out.println("7. Renovar Mensalidade de um Aluno"); // A NOVA OPÇÃO 7
+            System.out.println("7. Renovar Mensalidade de um Aluno");
             System.out.println("0. Voltar");
             System.out.print("Escolha: ");
 
@@ -58,7 +58,6 @@ public class MenuTerminal {
             if (op == 1) {
                 System.out.print("Nome do Aluno: ");
                 String nome = scanner.nextLine();
-                // Calcula a data de vencimento para exatamente 1 mês a partir de hoje
                 java.time.LocalDate vencimento = java.time.LocalDate.now().plusMonths(1);
                 alunoDAO.salvar(new Aluno(nome, vencimento));
             }
@@ -75,14 +74,12 @@ public class MenuTerminal {
                 List<Aluno> alunos = alunoDAO.listarTodos();
                 System.out.println("\n--- LISTA DE ALUNOS E MENSALIDADES ---");
                 for (Aluno a : alunos) {
-                    // O Java decide o status dinamicamente!
                     String status = a.isPagamentoAtrasado() ? "ATRASADO ❌" : "EM DIA ✅";
                     System.out.printf("ID: %d | Nome: %s | Vence em: %s | Status: %s\n",
                             a.getId(), a.getNome(), a.getDataVencimento(), status);
                 }
             }
             else if (op == 5) {
-                // OPÇÃO 5: Apenas um resumo de todas as fichas para visualização rápida
                 List<Ficha> todas = fichaDAO.listarTodasResumo();
                 System.out.println("\n--- FICHAS RECENTES (RESUMO) ---");
                 if (todas.isEmpty()) {
@@ -94,41 +91,14 @@ public class MenuTerminal {
                 }
             }
             else if (op == 6) {
-                // OPÇÃO 6: Visualização detalhada de uma ficha específica (por aluno)
                 System.out.print("\nDigite o ID do Aluno para ver a ficha completa: ");
                 int idAlunoBusca = Integer.parseInt(scanner.nextLine());
                 Ficha fichaCompleta = fichaDAO.buscarFichaRecentePorAluno(idAlunoBusca);
-
-                if (fichaCompleta != null) {
-                    System.out.println("\n==================================");
-                    System.out.println("    FICHA DETALHADA DO ALUNO");
-                    System.out.println("==================================");
-                    System.out.println("Período: " + fichaCompleta.getSemana());
-
-                    String obs = fichaCompleta.getObservacoesMedicas();
-                    System.out.println("Atenção Médica: " + (obs == null || obs.isEmpty() ? "Nenhuma" : obs));
-                    System.out.println("----------------------------------");
-
-                    String diaAtual = "";
-                    for (ItemFicha item : fichaCompleta.getItens()) {
-                        if (!item.getDiaSemana().equalsIgnoreCase(diaAtual)) {
-                            System.out.println("\n[" + item.getDiaSemana().toUpperCase() + "]");
-                            diaAtual = item.getDiaSemana();
-                        }
-                        System.out.printf(" - %s -> %d séries de %d reps (Carga: %.1f kg)\n",
-                                item.getNomeExercicio(), item.getSeries(), item.getRepeticoes(), item.getCarga());
-                    }
-                    System.out.println("==================================\n");
-                } else {
-                    System.out.println("O aluno não possui nenhuma ficha montada.");
-                }
+                mostrarFichaFormatada(fichaCompleta);
             }
             else if (op == 7) {
-                // OPÇÃO 7: Renovar a mensalidade de um aluno
                 System.out.print("\nDigite o ID do Aluno que está pagando a mensalidade: ");
                 int idRenovar = Integer.parseInt(scanner.nextLine());
-
-                // Chamamos o método no AlunoDAO para atualizar o banco
                 alunoDAO.renovarMensalidade(idRenovar);
             }
             else if (op == 0) {
@@ -150,7 +120,14 @@ public class MenuTerminal {
         ficha.setSemana(semana);
         ficha.setObservacoesMedicas(obs);
 
-        // Lista os exercícios disponíveis para ajudar o professor
+        System.out.println("\n--- Avaliação Corporal ---");
+        System.out.print("Peso Atual (kg): ");
+        ficha.setPeso(Double.parseDouble(scanner.nextLine().replace(",", ".")));
+        System.out.print("Percentual de Gordura (%): ");
+        ficha.setPercentualGordura(Double.parseDouble(scanner.nextLine().replace(",", ".")));
+        System.out.print("Massa Magra (kg): ");
+        ficha.setMassaMagra(Double.parseDouble(scanner.nextLine().replace(",", ".")));
+
         System.out.println("\n--- Exercícios Disponíveis ---");
         List<Exercicio> exercicios = exercicioDAO.listarTodos();
         for (Exercicio ex : exercicios) {
@@ -170,13 +147,11 @@ public class MenuTerminal {
             System.out.print("Repetições: ");
             int reps = Integer.parseInt(scanner.nextLine());
             System.out.print("Carga Inicial (kg): ");
-            double carga = Double.parseDouble(scanner.nextLine());
+            double carga = Double.parseDouble(scanner.nextLine().replace(",", "."));
 
-            // Adiciona o item dentro do objeto ficha, mas ainda não salva no banco
             ficha.adicionarItem(new ItemFicha(exId, dia, series, reps, carga));
         }
 
-        // Se a ficha tiver itens, envia o objeto completo para o DAO salvar tudo de uma vez
         if (!ficha.getItens().isEmpty()) {
             fichaDAO.salvarFicha(ficha);
         } else {
@@ -188,20 +163,27 @@ public class MenuTerminal {
         System.out.print("\nDigite seu ID de Aluno: ");
         int id = Integer.parseInt(scanner.nextLine());
         Ficha ficha = fichaDAO.buscarFichaRecentePorAluno(id);
+        mostrarFichaFormatada(ficha);
+    }
 
-        if (ficha != null) {
+    // Criamos esse método separado para não repetir código na Opção 6 e no Menu do Aluno!
+    private void mostrarFichaFormatada(Ficha fichaCompleta) {
+        if (fichaCompleta != null) {
             System.out.println("\n==================================");
-            System.out.println("       TREINO DA SEMANA");
+            System.out.println("    FICHA DETALHADA DO ALUNO");
             System.out.println("==================================");
-            System.out.println("Período: " + ficha.getSemana());
+            System.out.println("Período: " + fichaCompleta.getSemana());
 
-            String obs = ficha.getObservacoesMedicas();
+            System.out.println("\n--- Evolução Física ---");
+            System.out.printf("Peso: %.1f kg | Gordura: %.1f%% | Massa Magra: %.1f kg\n",
+                    fichaCompleta.getPeso(), fichaCompleta.getPercentualGordura(), fichaCompleta.getMassaMagra());
+
+            String obs = fichaCompleta.getObservacoesMedicas();
             System.out.println("Atenção Médica: " + (obs == null || obs.isEmpty() ? "Nenhuma" : obs));
             System.out.println("----------------------------------");
 
             String diaAtual = "";
-            for (ItemFicha item : ficha.getItens()) {
-                // Quebra visual por dia da semana
+            for (ItemFicha item : fichaCompleta.getItens()) {
                 if (!item.getDiaSemana().equalsIgnoreCase(diaAtual)) {
                     System.out.println("\n[" + item.getDiaSemana().toUpperCase() + "]");
                     diaAtual = item.getDiaSemana();
@@ -211,7 +193,7 @@ public class MenuTerminal {
             }
             System.out.println("==================================\n");
         } else {
-            System.out.println("Nenhuma ficha encontrada para este ID.");
+            System.out.println("O aluno não possui nenhuma ficha montada.");
         }
     }
 }

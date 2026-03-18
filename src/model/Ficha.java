@@ -9,6 +9,9 @@ public class Ficha {
     private String semana;
     private String observacoesMedicas;
     private String nomeAlunoTemporario;
+    private double peso;
+    private double percentualGordura;
+    private double massaMagra;
     private List<ItemFicha> itens = new ArrayList<>();
 
     public int getId() {
@@ -48,5 +51,29 @@ public class Ficha {
 
     public void setNomeAlunoTemporario(String nomeAlunoTemporario) {
         this.nomeAlunoTemporario = nomeAlunoTemporario;
+    }
+
+    public double getPeso() {
+        return peso;
+    }
+
+    public void setPeso(double peso) {
+        this.peso = peso;
+    }
+
+    public double getPercentualGordura() {
+        return percentualGordura;
+    }
+
+    public void setPercentualGordura(double percentualGordura) {
+        this.percentualGordura = percentualGordura;
+    }
+
+    public double getMassaMagra() {
+        return massaMagra;
+    }
+
+    public void setMassaMagra(double massaMagra) {
+        this.massaMagra = massaMagra;
     }
 }

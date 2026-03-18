@@ -4,22 +4,26 @@ import banco.FabricaConexao;
 import model.Ficha;
 import model.ItemFicha;
 import java.sql.*;
-import java.util.ArrayList; // Adicionado para funcionar a lista
-import java.util.List;      // Adicionado para funcionar a lista
+import java.util.ArrayList;
+import java.util.List;
 
 public class FichaDAO {
 
     public void salvarFicha(Ficha ficha) {
-        String sqlFicha = "INSERT INTO fichas(aluno_id, semana, observacoes_medicas) VALUES(?, ?, ?)";
+        // Atualizado com os 3 novos campos
+        String sqlFicha = "INSERT INTO fichas(aluno_id, semana, observacoes_medicas, peso, percentual_gordura, massa_magra) VALUES(?, ?, ?, ?, ?, ?)";
         String sqlItem = "INSERT INTO itens_ficha(ficha_id, exercicio_id, dia_semana, series, repeticoes, carga) VALUES(?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = FabricaConexao.getConexao()) {
-            conn.setAutoCommit(false); // Inicia transação
+            conn.setAutoCommit(false);
 
             try (PreparedStatement stmtFicha = conn.prepareStatement(sqlFicha, Statement.RETURN_GENERATED_KEYS)) {
                 stmtFicha.setInt(1, ficha.getAlunoId());
                 stmtFicha.setString(2, ficha.getSemana());
                 stmtFicha.setString(3, ficha.getObservacoesMedicas());
+                stmtFicha.setDouble(4, ficha.getPeso());
+                stmtFicha.setDouble(5, ficha.getPercentualGordura());
+                stmtFicha.setDouble(6, ficha.getMassaMagra());
                 stmtFicha.executeUpdate();
 
                 ResultSet rs = stmtFicha.getGeneratedKeys();
@@ -36,10 +40,10 @@ public class FichaDAO {
                         stmtItem.executeUpdate();
                     }
                 }
-                conn.commit(); // Confirma tudo se não houver erro
-                System.out.println("✅ Ficha de treino montada e salva com sucesso!");
+                conn.commit();
+                System.out.println("✅ Ficha de treino e avaliação física salvas com sucesso!");
             } catch (SQLException ex) {
-                conn.rollback(); // Desfaz tudo se der erro em algum exercício
+                conn.rollback();
                 System.err.println("Erro ao salvar itens. Transação revertida: " + ex.getMessage());
             }
         } catch (SQLException e) {
@@ -49,11 +53,8 @@ public class FichaDAO {
 
     public Ficha buscarFichaRecentePorAluno(int alunoId) {
         Ficha ficha = null;
-        String sqlFicha = "SELECT id, semana, observacoes_medicas FROM fichas WHERE aluno_id = ? ORDER BY id DESC LIMIT 1";
-        // INNER JOIN para pegar o nome popular do exercício lá na outra tabela
-        String sqlItens = "SELECT i.dia_semana, e.nome_popular, i.series, i.repeticoes, i.carga " +
-                "FROM itens_ficha i JOIN exercicios e ON i.exercicio_id = e.id " +
-                "WHERE i.ficha_id = ? ORDER BY i.dia_semana";
+        String sqlFicha = "SELECT id, semana, observacoes_medicas, peso, percentual_gordura, massa_magra FROM fichas WHERE aluno_id = ? ORDER BY id DESC LIMIT 1";
+        String sqlItens = "SELECT i.dia_semana, e.nome_popular, i.series, i.repeticoes, i.carga FROM itens_ficha i JOIN exercicios e ON i.exercicio_id = e.id WHERE i.ficha_id = ? ORDER BY i.dia_semana";
 
         try (Connection conn = FabricaConexao.getConexao();
              PreparedStatement stmtFicha = conn.prepareStatement(sqlFicha)) {
@@ -67,6 +68,9 @@ public class FichaDAO {
                 ficha.setAlunoId(alunoId);
                 ficha.setSemana(rsFicha.getString("semana"));
                 ficha.setObservacoesMedicas(rsFicha.getString("observacoes_medicas"));
+                ficha.setPeso(rsFicha.getDouble("peso"));
+                ficha.setPercentualGordura(rsFicha.getDouble("percentual_gordura"));
+                ficha.setMassaMagra(rsFicha.getDouble("massa_magra"));
 
                 try (PreparedStatement stmtItens = conn.prepareStatement(sqlItens)) {
                     stmtItens.setInt(1, ficha.getId());
@@ -89,14 +93,9 @@ public class FichaDAO {
         return ficha;
     }
 
-    // --- MÉTODO NOVO ADICIONADO AQUI ---
     public List<Ficha> listarTodasResumo() {
         List<Ficha> lista = new ArrayList<>();
-        // O JOIN junta a tabela fichas (f) com alunos (a) usando o ID
-        String sql = "SELECT f.id, f.semana, a.nome " +
-                "FROM fichas f " +
-                "JOIN alunos a ON f.aluno_id = a.id " +
-                "ORDER BY f.id DESC"; // Mostra as mais recentes primeiro
+        String sql = "SELECT f.id, f.semana, a.nome FROM fichas f JOIN alunos a ON f.aluno_id = a.id ORDER BY f.id DESC";
 
         try (Connection conn = FabricaConexao.getConexao();
              Statement stmt = conn.createStatement();
@@ -106,7 +105,7 @@ public class FichaDAO {
                 Ficha f = new Ficha();
                 f.setId(rs.getInt("id"));
                 f.setSemana(rs.getString("semana"));
-                f.setNomeAlunoTemporario(rs.getString("nome")); // Guarda o nome do aluno
+                f.setNomeAlunoTemporario(rs.getString("nome"));
                 lista.add(f);
             }
         } catch (SQLException e) {
@@ -115,21 +114,13 @@ public class FichaDAO {
         return lista;
     }
 
-    // --- NOVO MÉTODO: BUSCAR TODAS AS FICHAS COM OS EXERCÍCIOS ---
     public List<Ficha> listarTodasCompletas() {
         List<Ficha> listaFichas = new ArrayList<>();
+        String sqlFicha = "SELECT f.id, f.semana, f.observacoes_medicas, f.peso, f.percentual_gordura, f.massa_magra, a.nome " +
+                "FROM fichas f JOIN alunos a ON f.aluno_id = a.id ORDER BY f.id DESC";
 
-        // 1. Busca os dados principais da ficha e o nome do aluno
-        String sqlFicha = "SELECT f.id, f.semana, f.observacoes_medicas, a.nome " +
-                "FROM fichas f " +
-                "JOIN alunos a ON f.aluno_id = a.id " +
-                "ORDER BY f.id DESC";
-
-        // 2. Query preparada para buscar os itens (exercícios) de cada ficha
         String sqlItens = "SELECT i.dia_semana, e.nome_popular, i.series, i.repeticoes, i.carga " +
-                "FROM itens_ficha i " +
-                "JOIN exercicios e ON i.exercicio_id = e.id " +
-                "WHERE i.ficha_id = ? ORDER BY i.dia_semana";
+                "FROM itens_ficha i JOIN exercicios e ON i.exercicio_id = e.id WHERE i.ficha_id = ? ORDER BY i.dia_semana";
 
         try (Connection conn = FabricaConexao.getConexao();
              Statement stmtFicha = conn.createStatement();
@@ -141,8 +132,10 @@ public class FichaDAO {
                 ficha.setSemana(rsFicha.getString("semana"));
                 ficha.setObservacoesMedicas(rsFicha.getString("observacoes_medicas"));
                 ficha.setNomeAlunoTemporario(rsFicha.getString("nome"));
+                ficha.setPeso(rsFicha.getDouble("peso"));
+                ficha.setPercentualGordura(rsFicha.getDouble("percentual_gordura"));
+                ficha.setMassaMagra(rsFicha.getDouble("massa_magra"));
 
-                // Dentro do loop, usamos o ID da ficha atual para pescar os exercícios dela
                 try (PreparedStatement stmtItens = conn.prepareStatement(sqlItens)) {
                     stmtItens.setInt(1, ficha.getId());
                     ResultSet rsItens = stmtItens.executeQuery();
@@ -157,7 +150,6 @@ public class FichaDAO {
                         ficha.adicionarItem(item);
                     }
                 }
-                // Adiciona a ficha completa (já com a lista de itens) na lista final
                 listaFichas.add(ficha);
             }
         } catch (SQLException e) {

@@ -51,6 +51,7 @@ public class MenuTerminal {
             System.out.println("6. Ver Ficha Completa de um Aluno");
             System.out.println("7. Renovar Mensalidade de um Aluno");
             System.out.println("8. Excluir Aluno do Sistema");
+            System.out.println("9. Excluir Exercício do Sistema");
             System.out.println("0. Voltar");
             System.out.print("Escolha: ");
 
@@ -117,7 +118,31 @@ public class MenuTerminal {
                     System.out.println("Exclusão cancelada pelo usuário.");
                 }
             }
+            else if (op == 0) {
+                break;
+            }
+            else if (op == 9) {
+                System.out.println("\n--- LISTA DE EXERCÍCIOS ---");
+                // Trazemos a lista de exercícios para o professor ver os IDs antes de apagar
+                List<Exercicio> listaEx = exercicioDAO.listarTodos();
+                if (listaEx.isEmpty()) {
+                    System.out.println("Nenhum exercício cadastrado.");
+                } else {
+                    for (Exercicio ex : listaEx) {
+                        System.out.printf("ID: %d | %s (%s)\n", ex.getId(), ex.getNomePopular(), ex.getParteCorpo());
+                    }
 
+                    System.out.print("\nDigite o ID do Exercício que deseja EXCLUIR: ");
+                    int idExcluir = Integer.parseInt(scanner.nextLine());
+
+                    System.out.print("⚠️ TEM CERTEZA que deseja apagar este exercício? (s/n): ");
+                    if (scanner.nextLine().equalsIgnoreCase("s")) {
+                        exercicioDAO.excluir(idExcluir);
+                    } else {
+                        System.out.println("Exclusão cancelada pelo usuário.");
+                    }
+                }
+            }
             else if (op == 0) {
                 break;
             }
@@ -183,7 +208,6 @@ public class MenuTerminal {
         mostrarFichaFormatada(ficha);
     }
 
-    // Criamos esse método separado para não repetir código na Opção 6 e no Menu do Aluno!
     private void mostrarFichaFormatada(Ficha fichaCompleta) {
         if (fichaCompleta != null) {
             System.out.println("\n==================================");

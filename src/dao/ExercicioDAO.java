@@ -40,4 +40,33 @@ public class ExercicioDAO {
         }
         return lista;
     }
+
+    // --- MÉTODO NOVO: EXCLUIR EXERCÍCIO ---
+    public void excluir(int idExercicio) {
+        String sql = "DELETE FROM exercicios WHERE id = ?";
+
+        try (Connection conn = FabricaConexao.getConexao();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, idExercicio);
+
+            // Tenta executar a exclusão
+            int linhasAfetadas = pstmt.executeUpdate();
+
+            if (linhasAfetadas > 0) {
+                System.out.println("✅ Exercício excluído com sucesso!");
+            } else {
+                System.out.println("❌ Erro: Nenhum exercício encontrado com o ID " + idExercicio);
+            }
+
+        } catch (SQLException e) {
+            // Se o exercício já estiver na ficha de algum aluno, o SQLite bloqueia (FOREIGN KEY constraint failed)
+            if (e.getMessage().contains("FOREIGN KEY")) {
+                System.err.println("❌ AVISO: Não é possível excluir este exercício porque ele já faz parte da ficha de um ou mais alunos.");
+                System.err.println("Se o nome estiver errado, crie um novo exercício correto e pare de usar este.");
+            } else {
+                System.err.println("Erro ao excluir exercício: " + e.getMessage());
+            }
+        }
+    }
 }

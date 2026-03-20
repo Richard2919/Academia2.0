@@ -50,6 +50,7 @@ public class MenuTerminal {
             System.out.println("5. Listar Fichas Criadas (Resumo)");
             System.out.println("6. Ver Ficha Completa de um Aluno");
             System.out.println("7. Renovar Mensalidade de um Aluno");
+            System.out.println("8. Excluir Aluno do Sistema");
             System.out.println("0. Voltar");
             System.out.print("Escolha: ");
 
@@ -101,6 +102,22 @@ public class MenuTerminal {
                 int idRenovar = Integer.parseInt(scanner.nextLine());
                 alunoDAO.renovarMensalidade(idRenovar);
             }
+            else if (op == 0) {
+                break;
+            }
+            else if (op == 8) {
+                System.out.print("\nDigite o ID do Aluno que deseja EXCLUIR: ");
+                int idExcluir = Integer.parseInt(scanner.nextLine());
+
+                // camada de segurança importante antes de apagar dados reais
+                System.out.print("⚠️ TEM CERTEZA? Isso apagará o aluno e todas as fichas dele para sempre! (s/n): ");
+                if (scanner.nextLine().equalsIgnoreCase("s")) {
+                    alunoDAO.excluir(idExcluir);
+                } else {
+                    System.out.println("Exclusão cancelada pelo usuário.");
+                }
+            }
+
             else if (op == 0) {
                 break;
             }

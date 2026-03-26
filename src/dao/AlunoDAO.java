@@ -13,10 +13,14 @@ public class AlunoDAO {
         String sql = "INSERT INTO alunos(nome, data_vencimento) VALUES(?, ?)";
         try (Connection conn = FabricaConexao.getConexao();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             pstmt.setString(1, aluno.getNome());
-            pstmt.setString(2, aluno.getDataVencimento().toString()); // Salva como texto (ex: 2026-04-18)
+            pstmt.setString(2, aluno.getCpf());
+            pstmt.setInt(3, aluno.getAltura()); // Enviando como centímetros (int)
+            pstmt.setString(4, aluno.getDataVencimento().toString());
+
             pstmt.executeUpdate();
-            System.out.println("✅ Aluno cadastrado! Próximo vencimento: " + aluno.getDataVencimento());
+            System.out.println("✅ Aluno cadastrado com sucesso!");
         } catch (SQLException e) {
             System.err.println("Erro ao salvar: " + e.getMessage());
         }
@@ -32,7 +36,9 @@ public class AlunoDAO {
                 Aluno a = new Aluno();
                 a.setId(rs.getInt("id"));
                 a.setNome(rs.getString("nome"));
-                a.setDataVencimento(LocalDate.parse(rs.getString("data_vencimento"))); // Converte texto para Data
+                a.setCpf(rs.getString("cpf")); // Adicione esta linha
+                a.setAltura(rs.getInt("altura")); // Adicione esta linha
+                a.setDataVencimento(LocalDate.parse(rs.getString("data_vencimento")));
                 lista.add(a);
             }
         } catch (SQLException e) {

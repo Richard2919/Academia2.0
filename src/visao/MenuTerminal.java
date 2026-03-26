@@ -20,7 +20,7 @@ public class MenuTerminal {
         while (true) {
             System.out.println("\n=== SISTEMA ACADEMIA ===");
             System.out.println("1. Acesso Professor");
-            System.out.println("2. Acesso Aluno");
+            System.out.println("2. Acesso Aluno (Visualização)");
             System.out.println("0. Sair");
             System.out.print("Escolha a opção: ");
 
@@ -45,7 +45,7 @@ public class MenuTerminal {
             System.out.println("\n--- PAINEL DO PROFESSOR ---");
             System.out.println("1. Cadastrar Aluno");
             System.out.println("2. Cadastrar Exercício");
-            System.out.println("3. Montar Nova Ficha");
+            System.out.println("3. Montar Nova Ficha (Máx 6 treinos)");
             System.out.println("4. Listar Alunos (Controle de Pagamento)");
             System.out.println("5. Listar Fichas Criadas (Resumo)");
             System.out.println("6. Ver Ficha Completa de um Aluno");
@@ -55,96 +55,97 @@ public class MenuTerminal {
             System.out.println("0. Voltar");
             System.out.print("Escolha: ");
 
-            int op = Integer.parseInt(scanner.nextLine());
+            try {
+                int op = Integer.parseInt(scanner.nextLine());
 
-            if (op == 1) {
-                System.out.print("Nome do Aluno: ");
-                String nome = scanner.nextLine();
-                java.time.LocalDate vencimento = java.time.LocalDate.now().plusMonths(1);
-                alunoDAO.salvar(new Aluno(nome, vencimento));
-            }
-            else if (op == 2) {
-                System.out.print("Nome Técnico: "); String tec = scanner.nextLine();
-                System.out.print("Nome Popular: "); String pop = scanner.nextLine();
-                System.out.print("Grupo Muscular: "); String corpo = scanner.nextLine();
-                exercicioDAO.salvar(new Exercicio(tec, pop, corpo));
-            }
-            else if (op == 3) {
-                montarFichaFluxo();
-            }
-            else if (op == 4) {
-                List<Aluno> alunos = alunoDAO.listarTodos();
-                System.out.println("\n--- LISTA DE ALUNOS E MENSALIDADES ---");
-                for (Aluno a : alunos) {
-                    String status = a.isPagamentoAtrasado() ? "ATRASADO ❌" : "EM DIA ✅";
-                    System.out.printf("ID: %d | Nome: %s | Vence em: %s | Status: %s\n",
-                            a.getId(), a.getNome(), a.getDataVencimento(), status);
+                if (op == 1) {
+                    System.out.print("Nome do Aluno: ");
+                    String nome = scanner.nextLine();
+                    System.out.print("CPF: ");
+                    String cpf = scanner.nextLine();
+                    System.out.print("Altura (Em cm): ");
+                    int altura = Integer.parseInt(scanner.nextLine().replace(",", "."));
+
+                    java.time.LocalDate vencimento = java.time.LocalDate.now().plusMonths(1);
+                    Aluno novoAluno = new Aluno(nome, cpf, altura, vencimento);
+                    novoAluno.setCpf(cpf);
+                    novoAluno.setAltura(altura);
+                    alunoDAO.salvar(novoAluno);
                 }
-            }
-            else if (op == 5) {
-                List<Ficha> todas = fichaDAO.listarTodasResumo();
-                System.out.println("\n--- FICHAS RECENTES (RESUMO) ---");
-                if (todas.isEmpty()) {
-                    System.out.println("Nenhuma ficha foi montada ainda.");
-                } else {
-                    for (Ficha f : todas) {
-                        System.out.printf("Ficha ID: %d | Aluno: %s | Semana: %s\n", f.getId(), f.getNomeAlunoTemporario(), f.getSemana());
+                else if (op == 2) {
+                    System.out.print("Nome Técnico: "); String tec = scanner.nextLine();
+                    System.out.print("Nome Popular: "); String pop = scanner.nextLine();
+                    System.out.print("Grupo Muscular: "); String corpo = scanner.nextLine();
+                    exercicioDAO.salvar(new Exercicio(tec, pop, corpo));
+                }
+                else if (op == 3) {
+                    montarFichaFluxo();
+                }
+                else if (op == 4) {
+                    List<Aluno> alunos = alunoDAO.listarTodos();
+                    System.out.println("\n--- LISTA DE ALUNOS E MENSALIDADES ---");
+                    for (Aluno a : alunos) {
+                        String status = a.isPagamentoAtrasado() ? "ATRASADO ❌" : "EM DIA ✅";
+                        System.out.printf("ID: %d | Nome: %s | Vence em: %s | Status: %s\n",
+                                a.getId(), a.getNome(), a.getDataVencimento(), status);
                     }
                 }
-            }
-            else if (op == 6) {
-                System.out.print("\nDigite o ID do Aluno para ver a ficha completa: ");
-                int idAlunoBusca = Integer.parseInt(scanner.nextLine());
-                Ficha fichaCompleta = fichaDAO.buscarFichaRecentePorAluno(idAlunoBusca);
-                mostrarFichaFormatada(fichaCompleta);
-            }
-            else if (op == 7) {
-                System.out.print("\nDigite o ID do Aluno que está pagando a mensalidade: ");
-                int idRenovar = Integer.parseInt(scanner.nextLine());
-                alunoDAO.renovarMensalidade(idRenovar);
-            }
-            else if (op == 0) {
-                break;
-            }
-            else if (op == 8) {
-                System.out.print("\nDigite o ID do Aluno que deseja EXCLUIR: ");
-                int idExcluir = Integer.parseInt(scanner.nextLine());
-
-                // camada de segurança importante antes de apagar dados reais
-                System.out.print("⚠️ TEM CERTEZA? Isso apagará o aluno e todas as fichas dele para sempre! (s/n): ");
-                if (scanner.nextLine().equalsIgnoreCase("s")) {
-                    alunoDAO.excluir(idExcluir);
-                } else {
-                    System.out.println("Exclusão cancelada pelo usuário.");
-                }
-            }
-            else if (op == 0) {
-                break;
-            }
-            else if (op == 9) {
-                System.out.println("\n--- LISTA DE EXERCÍCIOS ---");
-                // Trazemos a lista de exercícios para o professor ver os IDs antes de apagar
-                List<Exercicio> listaEx = exercicioDAO.listarTodos();
-                if (listaEx.isEmpty()) {
-                    System.out.println("Nenhum exercício cadastrado.");
-                } else {
-                    for (Exercicio ex : listaEx) {
-                        System.out.printf("ID: %d | %s (%s)\n", ex.getId(), ex.getNomePopular(), ex.getParteCorpo());
-                    }
-
-                    System.out.print("\nDigite o ID do Exercício que deseja EXCLUIR: ");
-                    int idExcluir = Integer.parseInt(scanner.nextLine());
-
-                    System.out.print("⚠️ TEM CERTEZA que deseja apagar este exercício? (s/n): ");
-                    if (scanner.nextLine().equalsIgnoreCase("s")) {
-                        exercicioDAO.excluir(idExcluir);
+                else if (op == 5) {
+                    List<Ficha> todas = fichaDAO.listarTodasResumo();
+                    System.out.println("\n--- FICHAS RECENTES (RESUMO) ---");
+                    if (todas.isEmpty()) {
+                        System.out.println("Nenhuma ficha foi montada ainda.");
                     } else {
-                        System.out.println("Exclusão cancelada pelo usuário.");
+                        for (Ficha f : todas) {
+                            System.out.printf("Ficha ID: %d | Aluno: %s | Semana: %s\n", f.getId(), f.getNomeAlunoTemporario(), f.getSemana());
+                        }
                     }
                 }
-            }
-            else if (op == 0) {
-                break;
+                else if (op == 6) {
+                    System.out.print("\nDigite o ID do Aluno para ver a ficha completa: ");
+                    int idAlunoBusca = Integer.parseInt(scanner.nextLine());
+                    Ficha fichaCompleta = fichaDAO.buscarFichaRecentePorAluno(idAlunoBusca);
+                    mostrarFichaFormatada(fichaCompleta);
+                }
+                else if (op == 7) {
+                    System.out.print("\nDigite o ID do Aluno que está pagando a mensalidade: ");
+                    int idRenovar = Integer.parseInt(scanner.nextLine());
+                    alunoDAO.renovarMensalidade(idRenovar);
+                }
+                else if (op == 8) {
+                    System.out.print("\nDigite o ID do Aluno que deseja EXCLUIR: ");
+                    int idExcluir = Integer.parseInt(scanner.nextLine());
+                    System.out.print("⚠️ TEM CERTEZA? Isso apagará o aluno e todas as fichas dele! (s/n): ");
+                    if (scanner.nextLine().equalsIgnoreCase("s")) {
+                        alunoDAO.excluir(idExcluir);
+                    } else {
+                        System.out.println("Exclusão cancelada.");
+                    }
+                }
+                else if (op == 9) {
+                    System.out.println("\n--- LISTA DE EXERCÍCIOS ---");
+                    List<Exercicio> listaEx = exercicioDAO.listarTodos();
+                    if (listaEx.isEmpty()) {
+                        System.out.println("Nenhum exercício cadastrado.");
+                    } else {
+                        for (Exercicio ex : listaEx) {
+                            System.out.printf("ID: %d | %s (%s)\n", ex.getId(), ex.getNomePopular(), ex.getParteCorpo());
+                        }
+                        System.out.print("\nDigite o ID do Exercício que deseja EXCLUIR: ");
+                        int idExcluir = Integer.parseInt(scanner.nextLine());
+                        System.out.print("⚠️ TEM CERTEZA? (s/n): ");
+                        if (scanner.nextLine().equalsIgnoreCase("s")) {
+                            exercicioDAO.excluir(idExcluir);
+                        } else {
+                            System.out.println("Exclusão cancelada.");
+                        }
+                    }
+                }
+                else if (op == 0) {
+                    break;
+                }
+            } catch (Exception e) {
+                System.out.println("Erro: " + e.getMessage());
             }
         }
     }
@@ -176,13 +177,14 @@ public class MenuTerminal {
             System.out.printf("ID: %d | %s (%s)\n", ex.getId(), ex.getNomePopular(), ex.getParteCorpo());
         }
 
-        while (true) {
-            System.out.println("\nAdicionar exercício na ficha? (s/n)");
+        // ALTERAÇÃO: Regra de máximo 6 exercícios por ficha/semana
+        while (ficha.getItens().size() < 6) {
+            System.out.println("\nAdicionar exercício (" + (ficha.getItens().size() + 1) + "/6) na ficha? (s/n)");
             if (scanner.nextLine().equalsIgnoreCase("n")) break;
 
             System.out.print("ID do Exercício: ");
             int exId = Integer.parseInt(scanner.nextLine());
-            System.out.print("Dia da semana (ex: Segunda): ");
+            System.out.print("Dia da semana: ");
             String dia = scanner.nextLine();
             System.out.print("Séries: ");
             int series = Integer.parseInt(scanner.nextLine());
@@ -194,33 +196,53 @@ public class MenuTerminal {
             ficha.adicionarItem(new ItemFicha(exId, dia, series, reps, carga));
         }
 
+        if (ficha.getItens().size() >= 6) {
+            System.out.println("⚠️ Limite de 6 exercícios atingido.");
+        }
+
         if (!ficha.getItens().isEmpty()) {
             fichaDAO.salvarFicha(ficha);
         } else {
-            System.out.println("Ficha cancelada: nenhum exercício foi adicionado.");
+            System.out.println("Ficha cancelada.");
         }
     }
 
     private void menuAluno() {
-        System.out.print("\nDigite seu ID de Aluno: ");
-        int id = Integer.parseInt(scanner.nextLine());
-        Ficha ficha = fichaDAO.buscarFichaRecentePorAluno(id);
-        mostrarFichaFormatada(ficha);
+        // Regra: O aluno não treina sozinho e não toca no sistema
+        System.out.println("\n⚠️ AVISO: O aluno não opera o sistema. Treino deve ser acompanhado pelo professor.");
+        System.out.print("Digite o ID do Aluno: ");
+        try {
+            int id = Integer.parseInt(scanner.nextLine());
+            Ficha ficha = fichaDAO.buscarFichaRecentePorAluno(id);
+            mostrarFichaFormatada(ficha);
+        } catch (Exception e) {
+            System.out.println("ID inválido.");
+        }
     }
 
     private void mostrarFichaFormatada(Ficha fichaCompleta) {
         if (fichaCompleta != null) {
+            // Busca os dados do aluno para exibir CPF e Altura
+            Aluno aluno = alunoDAO.listarTodos().stream()
+                    .filter(a -> a.getId() == fichaCompleta.getAlunoId())
+                    .findFirst().orElse(null);
+
             System.out.println("\n==================================");
             System.out.println("    FICHA DETALHADA DO ALUNO");
             System.out.println("==================================");
+            if (aluno != null) {
+                System.out.println("ALUNO: " + aluno.getNome());
+                System.out.println("CPF: " + aluno.getCpf());
+                System.out.println("ALTURA: " + aluno.getAltura() + " m");
+            }
             System.out.println("Período: " + fichaCompleta.getSemana());
 
-            System.out.println("\n--- Evolução Física ---");
+            System.out.println("\n--- Avaliação Corporal ---");
             System.out.printf("Peso: %.1f kg | Gordura: %.1f%% | Massa Magra: %.1f kg\n",
                     fichaCompleta.getPeso(), fichaCompleta.getPercentualGordura(), fichaCompleta.getMassaMagra());
 
             String obs = fichaCompleta.getObservacoesMedicas();
-            System.out.println("Atenção Médica: " + (obs == null || obs.isEmpty() ? "Nenhuma" : obs));
+            System.out.println("Restrições: " + (obs == null || obs.isEmpty() ? "Nenhuma" : obs));
             System.out.println("----------------------------------");
 
             String diaAtual = "";
@@ -229,12 +251,12 @@ public class MenuTerminal {
                     System.out.println("\n[" + item.getDiaSemana().toUpperCase() + "]");
                     diaAtual = item.getDiaSemana();
                 }
-                System.out.printf(" - %s -> %d séries de %d reps (Carga: %.1f kg)\n",
+                System.out.printf(" - %s -> %d x %d (Carga: %.1f kg)\n",
                         item.getNomeExercicio(), item.getSeries(), item.getRepeticoes(), item.getCarga());
             }
             System.out.println("==================================\n");
         } else {
-            System.out.println("O aluno não possui nenhuma ficha montada.");
+            System.out.println("Nenhuma ficha encontrada.");
         }
     }
 }

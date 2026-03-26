@@ -15,7 +15,7 @@ public class FichaDAO {
         String sqlItem = "INSERT INTO itens_ficha(ficha_id, exercicio_id, dia_semana, series, repeticoes, carga) VALUES(?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = FabricaConexao.getConexao()) {
-            conn.setAutoCommit(false);
+            conn.setAutoCommit(false); // Ele desliga esse salvamento automático e cria uma "bolha de segurança" chamada Transação.
 
             try (PreparedStatement stmtFicha = conn.prepareStatement(sqlFicha, Statement.RETURN_GENERATED_KEYS)) {
                 stmtFicha.setInt(1, ficha.getAlunoId());

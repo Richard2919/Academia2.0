@@ -7,8 +7,12 @@ import model.Aluno;
 import model.Exercicio;
 import model.Ficha;
 import model.ItemFicha;
+
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 
 public class MenuTerminal {
     private Scanner scanner = new Scanner(System.in);
@@ -45,13 +49,15 @@ public class MenuTerminal {
             System.out.println("\n--- PAINEL DO PROFESSOR ---");
             System.out.println("1. Cadastrar Aluno");
             System.out.println("2. Cadastrar Exercício");
-            System.out.println("3. Montar Nova Ficha (Máx 6 treinos)");
+            System.out.println("3. Montar Nova Ficha (Máx 6 dias de treino)");
             System.out.println("4. Listar Alunos (Controle de Pagamento)");
             System.out.println("5. Listar Fichas Criadas (Resumo)");
             System.out.println("6. Ver Ficha Completa de um Aluno");
             System.out.println("7. Renovar Mensalidade de um Aluno");
             System.out.println("8. Excluir Aluno do Sistema");
             System.out.println("9. Excluir Exercício do Sistema");
+            System.out.println("10. Listar Todos os Exercícios");
+            System.out.println("11. Excluir Ficha de Treino");
             System.out.println("0. Voltar");
             System.out.print("Escolha: ");
 
@@ -63,8 +69,8 @@ public class MenuTerminal {
                     String nome = scanner.nextLine();
                     System.out.print("CPF: ");
                     String cpf = scanner.nextLine();
-                    System.out.print("Altura (Em cm): ");
-                    int altura = Integer.parseInt(scanner.nextLine().replace(",", "."));
+                    System.out.print("Altura (Em cm, ex: 180): ");
+                    int altura = Integer.parseInt(scanner.nextLine());
 
                     java.time.LocalDate vencimento = java.time.LocalDate.now().plusMonths(1);
                     Aluno novoAluno = new Aluno(nome, cpf, altura, vencimento);
@@ -86,8 +92,10 @@ public class MenuTerminal {
                     System.out.println("\n--- LISTA DE ALUNOS E MENSALIDADES ---");
                     for (Aluno a : alunos) {
                         String status = a.isPagamentoAtrasado() ? "ATRASADO ❌" : "EM DIA ✅";
-                        System.out.printf("ID: %d | Nome: %s | Vence em: %s | Status: %s\n",
-                                a.getId(), a.getNome(), a.getDataVencimento(), status);
+
+                        // ALTERAÇÃO AQUI: Trocamos o "ID: %d" por "CPF: %s" e o a.getId() por a.getCpf()
+                        System.out.printf("CPF: %s | Nome: %s | Vence em: %s | Status: %s\n",
+                                a.getCpf(), a.getNome(), a.getDataVencimento(), status);
                     }
                 }
                 else if (op == 5) {
@@ -102,15 +110,27 @@ public class MenuTerminal {
                     }
                 }
                 else if (op == 6) {
-                    System.out.print("\nDigite o ID do Aluno para ver a ficha completa: ");
-                    int idAlunoBusca = Integer.parseInt(scanner.nextLine());
-                    Ficha fichaCompleta = fichaDAO.buscarFichaRecentePorAluno(idAlunoBusca);
-                    mostrarFichaFormatada(fichaCompleta);
+                    System.out.print("\nDigite o CPF do Aluno para ver a ficha completa: ");
+                    String cpfBusca = scanner.nextLine();
+                    Aluno alunoEncontrado = alunoDAO.buscarPorCpf(cpfBusca);
+
+                    if (alunoEncontrado != null) {
+                        Ficha fichaCompleta = fichaDAO.buscarFichaRecentePorAluno(alunoEncontrado.getId());
+                        mostrarFichaFormatada(fichaCompleta);
+                    } else {
+                        System.out.println("❌ Nenhum aluno encontrado com o CPF informado.");
+                    }
                 }
                 else if (op == 7) {
-                    System.out.print("\nDigite o ID do Aluno que está pagando a mensalidade: ");
-                    int idRenovar = Integer.parseInt(scanner.nextLine());
-                    alunoDAO.renovarMensalidade(idRenovar);
+                    System.out.print("\nDigite o CPF do Aluno que está pagando a mensalidade: ");
+                    String cpfRenovar = scanner.nextLine();
+                    Aluno alunoEncontrado = alunoDAO.buscarPorCpf(cpfRenovar);
+
+                    if (alunoEncontrado != null) {
+                        alunoDAO.renovarMensalidade(alunoEncontrado.getId());
+                    } else {
+                        System.out.println("❌ Nenhum aluno encontrado com o CPF informado.");
+                    }
                 }
                 else if (op == 8) {
                     System.out.print("\nDigite o ID do Aluno que deseja EXCLUIR: ");
@@ -141,6 +161,42 @@ public class MenuTerminal {
                         }
                     }
                 }
+                else if (op == 10) {
+                    System.out.println("\n--- CATÁLOGO DE EXERCÍCIOS ---");
+                    List<Exercicio> listaEx = exercicioDAO.listarTodos();
+                    if (listaEx.isEmpty()) {
+                        System.out.println("Nenhum exercício cadastrado no sistema.");
+                    } else {
+                        for (Exercicio ex : listaEx) {
+                            System.out.printf("ID: %d | Técnico: %s | Popular: %s | Músculo: %s\n",
+                                    ex.getId(), ex.getNomeTecnico(), ex.getNomePopular(), ex.getParteCorpo());
+                        }
+                    }
+                }
+                else if (op == 11) {
+                    System.out.println("\n--- EXCLUIR FICHA DE TREINO ---");
+
+                    // Lista as fichas para o professor saber o ID
+                    List<Ficha> todas = fichaDAO.listarTodasResumo();
+                    if (todas.isEmpty()) {
+                        System.out.println("Nenhuma ficha cadastrada no sistema para excluir.");
+                    } else {
+                        for (Ficha f : todas) {
+                            System.out.printf("Ficha ID: %d | Aluno: %s | Semana: %s\n",
+                                    f.getId(), f.getNomeAlunoTemporario(), f.getSemana());
+                        }
+
+                        System.out.print("\nDigite o ID da Ficha que deseja EXCLUIR: ");
+                        int idExcluir = Integer.parseInt(scanner.nextLine());
+
+                        System.out.print("⚠️ TEM CERTEZA? Isso apagará a ficha e todos os exercícios dentro dela! (s/n): ");
+                        if (scanner.nextLine().equalsIgnoreCase("s")) {
+                            fichaDAO.excluir(idExcluir);
+                        } else {
+                            System.out.println("Exclusão cancelada.");
+                        }
+                    }
+                }
                 else if (op == 0) {
                     break;
                 }
@@ -151,15 +207,22 @@ public class MenuTerminal {
     }
 
     private void montarFichaFluxo() {
-        System.out.print("\nID do Aluno: ");
-        int alunoId = Integer.parseInt(scanner.nextLine());
+        System.out.print("\nCPF do Aluno: ");
+        String cpf = scanner.nextLine();
+        Aluno alunoEncontrado = alunoDAO.buscarPorCpf(cpf);
+
+        if (alunoEncontrado == null) {
+            System.out.println("❌ Aluno não encontrado com esse CPF. Ficha cancelada.");
+            return;
+        }
+
         System.out.print("Semana Referência (ex: 10/04 a 17/04): ");
         String semana = scanner.nextLine();
         System.out.print("Avisos Médicos/Restrições: ");
         String obs = scanner.nextLine();
 
         Ficha ficha = new Ficha();
-        ficha.setAlunoId(alunoId);
+        ficha.setAlunoId(alunoEncontrado.getId());
         ficha.setSemana(semana);
         ficha.setObservacoesMedicas(obs);
 
@@ -177,15 +240,25 @@ public class MenuTerminal {
             System.out.printf("ID: %d | %s (%s)\n", ex.getId(), ex.getNomePopular(), ex.getParteCorpo());
         }
 
-        // ALTERAÇÃO: Regra de máximo 6 exercícios por ficha/semana
-        while (ficha.getItens().size() < 6) {
-            System.out.println("\nAdicionar exercício (" + (ficha.getItens().size() + 1) + "/6) na ficha? (s/n)");
+        Set<String> diasDeTreino = new HashSet<>();
+        int contadorExercicios = 1;
+
+        while (true) {
+            System.out.println("\nAdicionar exercício " + contadorExercicios + " na ficha? (s/n)");
             if (scanner.nextLine().equalsIgnoreCase("n")) break;
+
+            System.out.print("Dia da semana (ex: Segunda, Terca): ");
+            String dia = scanner.nextLine().toUpperCase();
+
+            // Regra: Bloqueia se tentar adicionar um 7º dia diferente na semana
+            if (!diasDeTreino.contains(dia) && diasDeTreino.size() >= 6) {
+                System.out.println("⚠️ Limite de 6 dias de treino por semana atingido!");
+                System.out.println("Você só pode adicionar mais exercícios nos dias: " + diasDeTreino);
+                continue;
+            }
 
             System.out.print("ID do Exercício: ");
             int exId = Integer.parseInt(scanner.nextLine());
-            System.out.print("Dia da semana: ");
-            String dia = scanner.nextLine();
             System.out.print("Séries: ");
             int series = Integer.parseInt(scanner.nextLine());
             System.out.print("Repetições: ");
@@ -193,36 +266,35 @@ public class MenuTerminal {
             System.out.print("Carga Inicial (kg): ");
             double carga = Double.parseDouble(scanner.nextLine().replace(",", "."));
 
+            diasDeTreino.add(dia);
             ficha.adicionarItem(new ItemFicha(exId, dia, series, reps, carga));
-        }
-
-        if (ficha.getItens().size() >= 6) {
-            System.out.println("⚠️ Limite de 6 exercícios atingido.");
+            contadorExercicios++;
         }
 
         if (!ficha.getItens().isEmpty()) {
             fichaDAO.salvarFicha(ficha);
+            System.out.println("✅ Ficha salva com sucesso!");
         } else {
             System.out.println("Ficha cancelada.");
         }
     }
 
     private void menuAluno() {
-        // Regra: O aluno não treina sozinho e não toca no sistema
-        System.out.println("\n⚠️ AVISO: O aluno não opera o sistema. Treino deve ser acompanhado pelo professor.");
-        System.out.print("Digite o ID do Aluno: ");
-        try {
-            int id = Integer.parseInt(scanner.nextLine());
-            Ficha ficha = fichaDAO.buscarFichaRecentePorAluno(id);
+        System.out.print("\nDigite seu CPF para acessar seu treino: ");
+        String cpf = scanner.nextLine();
+        Aluno alunoEncontrado = alunoDAO.buscarPorCpf(cpf);
+
+        if (alunoEncontrado != null) {
+            System.out.println("Olá, " + alunoEncontrado.getNome() + "! Carregando seu treino...");
+            Ficha ficha = fichaDAO.buscarFichaRecentePorAluno(alunoEncontrado.getId());
             mostrarFichaFormatada(ficha);
-        } catch (Exception e) {
-            System.out.println("ID inválido.");
+        } else {
+            System.out.println("❌ CPF não cadastrado no sistema.");
         }
     }
 
     private void mostrarFichaFormatada(Ficha fichaCompleta) {
         if (fichaCompleta != null) {
-            // Busca os dados do aluno para exibir CPF e Altura
             Aluno aluno = alunoDAO.listarTodos().stream()
                     .filter(a -> a.getId() == fichaCompleta.getAlunoId())
                     .findFirst().orElse(null);
@@ -233,7 +305,7 @@ public class MenuTerminal {
             if (aluno != null) {
                 System.out.println("ALUNO: " + aluno.getNome());
                 System.out.println("CPF: " + aluno.getCpf());
-                System.out.println("ALTURA: " + aluno.getAltura() + " m");
+                System.out.println("ALTURA: " + (aluno.getAltura() / 100.0) + " m");
             }
             System.out.println("Período: " + fichaCompleta.getSemana());
 
@@ -245,11 +317,26 @@ public class MenuTerminal {
             System.out.println("Restrições: " + (obs == null || obs.isEmpty() ? "Nenhuma" : obs));
             System.out.println("----------------------------------");
 
+            // Ordenando a lista de exercícios baseado nos dias da semana
+            List<String> ordemDias = Arrays.asList(
+                    "SEGUNDA", "TERÇA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SÁBADO", "SABADO", "DOMINGO"
+            );
+
+            fichaCompleta.getItens().sort((item1, item2) -> {
+                int peso1 = ordemDias.indexOf(item1.getDiaSemana().toUpperCase());
+                int peso2 = ordemDias.indexOf(item2.getDiaSemana().toUpperCase());
+
+                if (peso1 == -1) peso1 = 99;
+                if (peso2 == -1) peso2 = 99;
+
+                return Integer.compare(peso1, peso2);
+            });
+
             String diaAtual = "";
             for (ItemFicha item : fichaCompleta.getItens()) {
-                if (!item.getDiaSemana().equalsIgnoreCase(diaAtual)) {
+                if (!item.getDiaSemana().toUpperCase().equalsIgnoreCase(diaAtual)) {
                     System.out.println("\n[" + item.getDiaSemana().toUpperCase() + "]");
-                    diaAtual = item.getDiaSemana();
+                    diaAtual = item.getDiaSemana().toUpperCase();
                 }
                 System.out.printf(" - %s -> %d x %d (Carga: %.1f kg)\n",
                         item.getNomeExercicio(), item.getSeries(), item.getRepeticoes(), item.getCarga());

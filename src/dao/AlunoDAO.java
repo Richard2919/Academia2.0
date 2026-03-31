@@ -10,19 +10,23 @@ import java.util.List;
 public class AlunoDAO {
 
     public void salvar(Aluno aluno) {
-        String sql = "INSERT INTO alunos(nome, data_vencimento) VALUES(?, ?)";
-        try (Connection conn = FabricaConexao.getConexao();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        String sql = "INSERT INTO alunos (nome, cpf, altura, data_vencimento) VALUES (?, ?, ?, ?)";
+
+        try (java.sql.Connection conn = banco.FabricaConexao.getConexao();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
 
             pstmt.setString(1, aluno.getNome());
             pstmt.setString(2, aluno.getCpf());
-            pstmt.setInt(3, aluno.getAltura()); // Enviando como centímetros (int)
+            pstmt.setInt(3, aluno.getAltura());
             pstmt.setString(4, aluno.getDataVencimento().toString());
 
             pstmt.executeUpdate();
             System.out.println("✅ Aluno cadastrado com sucesso!");
-        } catch (SQLException e) {
-            System.err.println("Erro ao salvar: " + e.getMessage());
+
+        } catch (java.sql.SQLException e) {
+            System.err.println("Erro ao salvar aluno: " + e.getMessage());
         }
     }
 
@@ -118,5 +122,28 @@ public class AlunoDAO {
         } catch (SQLException e) {
             System.err.println("Erro de conexão: " + e.getMessage());
         }
+    }
+    // --- MÉTODO NOVO: BUSCAR ALUNO POR CPF ---
+    public Aluno buscarPorCpf(String cpf) {
+        Aluno aluno = null;
+        String sql = "SELECT * FROM alunos WHERE cpf = ?";
+
+        try (Connection conn = FabricaConexao.getConexao();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, cpf);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                aluno = new Aluno();
+                aluno.setId(rs.getInt("id"));
+                aluno.setNome(rs.getString("nome"));
+                aluno.setCpf(rs.getString("cpf"));
+                aluno.setDataVencimento(java.time.LocalDate.parse(rs.getString("data_vencimento")));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar CPF: " + e.getMessage());
+        }
+        return aluno;
     }
 }

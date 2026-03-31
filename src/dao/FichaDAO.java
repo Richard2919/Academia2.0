@@ -157,4 +157,39 @@ public class FichaDAO {
         }
         return listaFichas;
     }
+    public void excluir(int fichaId) {
+        // Precisamos de dois comandos: um para os exercícios da ficha, outro para a ficha em si
+        String sqlItens = "DELETE FROM itens_ficha WHERE ficha_id = ?";
+        String sqlFicha = "DELETE FROM fichas WHERE id = ?";
+
+        try (java.sql.Connection conn = banco.FabricaConexao.getConexao()) {
+
+            // Desliga o salvamento automático para criar a transação de segurança
+            conn.setAutoCommit(false);
+
+            try (java.sql.PreparedStatement pstmtItens = conn.prepareStatement(sqlItens);
+                 java.sql.PreparedStatement pstmtFicha = conn.prepareStatement(sqlFicha)) {
+
+                // 1º: Apaga todos os exercícios vinculados a esta ficha
+                pstmtItens.setInt(1, fichaId);
+                pstmtItens.executeUpdate();
+
+                // 2º: Apaga a capa da ficha
+                pstmtFicha.setInt(1, fichaId);
+                pstmtFicha.executeUpdate();
+
+                // Se deu tudo certo, confirma as duas exclusões no banco!
+                conn.commit();
+                System.out.println("✅ Ficha e seus exercícios excluídos com sucesso!");
+
+            } catch (java.sql.SQLException e) {
+                // Se der erro, desfaz tudo e não apaga nada pela metade
+                conn.rollback();
+                System.err.println("Erro ao excluir ficha. Operação cancelada: " + e.getMessage());
+            }
+
+        } catch (java.sql.SQLException e) {
+            System.err.println("Erro de conexão com o banco: " + e.getMessage());
+        }
+    }
 }

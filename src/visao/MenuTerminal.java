@@ -115,8 +115,15 @@ public class MenuTerminal {
                     Aluno alunoEncontrado = alunoDAO.buscarPorCpf(cpfBusca);
 
                     if (alunoEncontrado != null) {
-                        Ficha fichaCompleta = fichaDAO.buscarFichaRecentePorAluno(alunoEncontrado.getId());
-                        mostrarFichaFormatada(fichaCompleta);
+                        // 🚨 NOVA DIRETRIZ: BLOQUEIO DE INADIMPLENTES AQUI 🚨
+                        if (alunoEncontrado.isPagamentoAtrasado()) {
+                            System.out.println("⛔ ACESSO NEGADO: Ficha bloqueada por falta de pagamento.");
+                            System.out.println("O sistema reteve as informações. Regularize o status do aluno.");
+                        } else {
+                            // Se o pagamento estiver em dia, exibe a ficha normalmente
+                            Ficha fichaCompleta = fichaDAO.buscarFichaRecentePorAluno(alunoEncontrado.getId());
+                            mostrarFichaFormatada(fichaCompleta);
+                        }
                     } else {
                         System.out.println("❌ Nenhum aluno encontrado com o CPF informado.");
                     }
@@ -216,6 +223,13 @@ public class MenuTerminal {
             return;
         }
 
+        // 🚨 NOVA DIRETRIZ: BLOQUEIO DE INADIMPLENTES AQUI 🚨
+        if (alunoEncontrado.isPagamentoAtrasado()) {
+            System.out.println("⛔ ACESSO NEGADO: O aluno está com a mensalidade atrasada!");
+            System.out.println("Regularize o pagamento (Opção 7) antes de montar uma nova ficha.");
+            return; // O 'return' expulsa o usuário daqui e volta pro menu principal
+        }
+
         System.out.print("Semana Referência (ex: 10/04 a 17/04): ");
         String semana = scanner.nextLine();
         System.out.print("Avisos Médicos/Restrições: ");
@@ -285,6 +299,14 @@ public class MenuTerminal {
         Aluno alunoEncontrado = alunoDAO.buscarPorCpf(cpf);
 
         if (alunoEncontrado != null) {
+
+            // 🚨 BLOQUEIO DA CATRACA DO ALUNO 🚨
+            if (alunoEncontrado.isPagamentoAtrasado()) {
+                System.out.println("⛔ ACESSO BLOQUEADO: Mensalidade pendente!");
+                System.out.println("Por favor, dirija-se à recepção ou fale com seu professor para regularizar o acesso.");
+                return; // Expulsa o aluno e não mostra a ficha
+            }
+
             System.out.println("Olá, " + alunoEncontrado.getNome() + "! Carregando seu treino...");
             Ficha ficha = fichaDAO.buscarFichaRecentePorAluno(alunoEncontrado.getId());
             mostrarFichaFormatada(ficha);

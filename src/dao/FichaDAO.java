@@ -21,9 +21,9 @@ public class FichaDAO {
                 stmtFicha.setInt(1, ficha.getAlunoId());
                 stmtFicha.setString(2, ficha.getSemana());
                 stmtFicha.setString(3, ficha.getObservacoesMedicas());
-                stmtFicha.setDouble(4, ficha.getPeso());
-                stmtFicha.setDouble(5, ficha.getPercentualGordura());
-                stmtFicha.setDouble(6, ficha.getMassaMagra());
+             //   stmtFicha.setDouble(4, ficha.getPeso());
+             //   stmtFicha.setDouble(5, ficha.getPercentualGordura());
+             //   stmtFicha.setDouble(6, ficha.getMassaMagra());
                 stmtFicha.executeUpdate();
 
                 ResultSet rs = stmtFicha.getGeneratedKeys();
@@ -68,9 +68,9 @@ public class FichaDAO {
                 ficha.setAlunoId(alunoId);
                 ficha.setSemana(rsFicha.getString("semana"));
                 ficha.setObservacoesMedicas(rsFicha.getString("observacoes_medicas"));
-                ficha.setPeso(rsFicha.getDouble("peso"));
-                ficha.setPercentualGordura(rsFicha.getDouble("percentual_gordura"));
-                ficha.setMassaMagra(rsFicha.getDouble("massa_magra"));
+             //   ficha.setPeso(rsFicha.getDouble("peso"));
+             //   ficha.setPercentualGordura(rsFicha.getDouble("percentual_gordura"));
+             //   ficha.setMassaMagra(rsFicha.getDouble("massa_magra"));
 
                 try (PreparedStatement stmtItens = conn.prepareStatement(sqlItens)) {
                     stmtItens.setInt(1, ficha.getId());
@@ -132,9 +132,9 @@ public class FichaDAO {
                 ficha.setSemana(rsFicha.getString("semana"));
                 ficha.setObservacoesMedicas(rsFicha.getString("observacoes_medicas"));
                 ficha.setNomeAlunoTemporario(rsFicha.getString("nome"));
-                ficha.setPeso(rsFicha.getDouble("peso"));
-                ficha.setPercentualGordura(rsFicha.getDouble("percentual_gordura"));
-                ficha.setMassaMagra(rsFicha.getDouble("massa_magra"));
+          //      ficha.setPeso(rsFicha.getDouble("peso"));
+          //      ficha.setPercentualGordura(rsFicha.getDouble("percentual_gordura"));
+          //      ficha.setMassaMagra(rsFicha.getDouble("massa_magra"));
 
                 try (PreparedStatement stmtItens = conn.prepareStatement(sqlItens)) {
                     stmtItens.setInt(1, ficha.getId());

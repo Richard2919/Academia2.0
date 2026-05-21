@@ -6,17 +6,18 @@ public class Aluno {
     private int id;
     private String nome;
     private String cpf;
-    private int altura;
     private LocalDate dataVencimento;
 
     // Construtor vazio (importante para frameworks e para o DAO)
     public Aluno() {}
 
-    public Aluno(String nome, String cpf, int altura, LocalDate dataVencimento) {
+    public Aluno(String nome, String cpf,LocalDate dataVencimento) {
         this.nome = nome;
         this.cpf = cpf;
-        this.altura = altura;
         this.dataVencimento = dataVencimento;
+    }
+
+    public Aluno(String nome, String cpf) {
     }
 
 
@@ -39,13 +40,6 @@ public class Aluno {
     }
     public void setCpf(String cpf) {
         this.cpf = cpf;
-    }
-
-    public int getAltura() {
-        return altura;
-    }
-    public void setAltura(int altura) {
-        this.altura = altura;
     }
 
     public LocalDate getDataVencimento() {

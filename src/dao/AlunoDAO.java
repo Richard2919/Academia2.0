@@ -11,7 +11,7 @@ public class AlunoDAO {
 
     public void salvar(Aluno aluno) {
 
-        String sql = "INSERT INTO alunos (nome, cpf, altura, data_vencimento) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO alunos (nome, cpf, data_vencimento) VALUES (?, ?, ?)";
 
         try (java.sql.Connection conn = banco.FabricaConexao.getConexao();
              java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -19,8 +19,7 @@ public class AlunoDAO {
 
             pstmt.setString(1, aluno.getNome());
             pstmt.setString(2, aluno.getCpf());
-            pstmt.setInt(3, aluno.getAltura());
-            pstmt.setString(4, aluno.getDataVencimento().toString());
+            pstmt.setString(3, aluno.getDataVencimento().toString());
 
             pstmt.executeUpdate();
             System.out.println("✅ Aluno cadastrado com sucesso!");
@@ -40,8 +39,7 @@ public class AlunoDAO {
                 Aluno a = new Aluno();
                 a.setId(rs.getInt("id"));
                 a.setNome(rs.getString("nome"));
-                a.setCpf(rs.getString("cpf")); // Adicione esta linha
-                a.setAltura(rs.getInt("altura")); // Adicione esta linha
+                a.setCpf(rs.getString("cpf"));
                 a.setDataVencimento(LocalDate.parse(rs.getString("data_vencimento")));
                 lista.add(a);
             }

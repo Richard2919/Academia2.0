@@ -23,7 +23,6 @@ public class FabricaConexao {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome TEXT,
                 cpf TEXT,
-                altura INTEGER,
                 data_vencimento TEXT
             );
         """;

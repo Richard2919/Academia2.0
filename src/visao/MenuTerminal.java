@@ -69,13 +69,10 @@ public class MenuTerminal {
                     String nome = scanner.nextLine();
                     System.out.print("CPF: ");
                     String cpf = scanner.nextLine();
-                    System.out.print("Altura (Em cm, ex: 180): ");
-                    int altura = Integer.parseInt(scanner.nextLine());
 
                     java.time.LocalDate vencimento = java.time.LocalDate.now().plusMonths(1);
-                    Aluno novoAluno = new Aluno(nome, cpf, altura, vencimento);
+                    Aluno novoAluno = new Aluno(nome, cpf, vencimento);
                     novoAluno.setCpf(cpf);
-                    novoAluno.setAltura(altura);
                     alunoDAO.salvar(novoAluno);
                 }
                 else if (op == 2) {
@@ -333,7 +330,7 @@ public class MenuTerminal {
 
         //  System.out.println("\n--- Avaliação Corporal ---");
         //    System.out.printf("Peso: %.1f kg | Gordura: %.1f%% | Massa Magra: %.1f kg\n",
-        //           fichaCompleta.getPeso(), fichaCompleta.getPercentualGordura(), fichaCompleta.getMassaMagra());1
+        //           fichaCompleta.getPeso(), fichaCompleta.getPercentualGordura(), fichaCompleta.getMassaMagra());11
 
             String obs = fichaCompleta.getObservacoesMedicas();
             System.out.println("Restrições: " + (obs == null || obs.isEmpty() ? "Nenhuma" : obs));
